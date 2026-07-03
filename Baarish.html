@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Baarish 🌧️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050510;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            max-width: 90%;
+            width: 450px;
+            transition: opacity 1s ease;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #a1c4fd, #c2e9fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #d1d5db;
+        }
+        .math-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            color: #60a5fa;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            height: 50px;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #yesBtn {
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+        }
+        #yesBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 117, 140, 0.6);
+        }
+        #noBtn {
+            background-color: #374151;
+            color: #9ca3af;
+            position: absolute;
+            left: 55%;
+        }
+        #successMessage {
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #successMessage h2 {
+            font-size: 2rem;
+            color: #ff758c;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="mathCanvas"></canvas>
+
+    <!-- Main Card -->
+    <div class="container" id="mainCard">
+        <h1>Hey Baarish! 🌧️</h1>
+        <p class="math-text">
+            Equation of us: f(x) = Perfect Match
+        </p>
+        <p>Mathematically, particles collide by chance, but my coordinates point only towards you. Will you go on a date with me?</p>
+        <div class="btn-group" id="actionArea">
+            <button id="yesBtn" onclick="acceptProposal()">Yes!</button>
+            <button id="noBtn" onmouseover="evadeButton()">No</button>
+        </div>
+    </div>
+
+    <!-- Success Card -->
+    <div class="container" id="successMessage">
+        <h2>It's a Match! ❤️</h2>
+        <p class="math-text">
+            x(t) = 16sin³(t) <br>
+            y(t) = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
+        </p>
+        <p>Like these chaotic water droplets converging into a stable mathematical heart, you bring order and beauty to my life. <br><br> See you on our date! ✨</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            generateHeartPoints();
+        });
+
+        const particles = [];
+        const particleCount = 200; 
+        let isHeartShape = false;
+        let heartPoints = [];
+
+        // Particle Class
+        class Droplet {
+            constructor() {
+                this.reset();
+                // Random starting point in life cycle
+                this.y = Math.random() * height;
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -20;
+                this.speed = 1.5 + Math.random() * 3;
+                this.radius = 1 + Math.random() * 2.5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.omega = 0.02 + Math.random() * 0.03; // Angular frequency for sine wave
+                this.amplitude = 0.5 + Math.random() * 1.5; // Amplitude of oscillation
+                this.targetX = null;
+                this.targetY = null;
+                this.color = 'rgba(161, 196, 253, 0.5)';
+            }
+
+            update() {
+                if (isHeartShape && this.targetX !== null) {
+                    // Linear Interpolation (Lerp) towards the heart coordinates
+                    this.x += (this.targetX - this.x) * 0.05;
+                    this.y += (this.targetY - this.y) * 0.05;
+                    this.color = `rgba(255, ${100 + Math.random()*50}, ${130 + Math.random()*50}, 0.8)`;
+                } else {
+                    // Normal Rain motion: Linear speed + Sine wave horizontal oscillation
+                    this.y += this.speed;
+                    this.angle += this.omega;
+                    this.x += Math.sin(this.angle) * this.amplitude;
+
+                    // Reset when off bounds
+                    if (this.y > height) {
+                        this.reset();
+                    }
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        // Generate Math Parametric Heart Coordinates
+        function generateHeartPoints() {
+            heartPoints = [];
+            const centerX = width / 2;
+            const centerY = height / 2 - 50;
+            // Scaling factor depending on screen size
+            const scale = Math.min(width, height) / 32;
+
+            for (let i = 0; i < particleCount; i++) {
+                // Parameter t ranges from 0 to 2*PI
+                const t = (i / particleCount) * Math.PI * 2;
+                
+                // Classic Heart Parametric Equations
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+
+                // Map standard Math coordinates (Cartesian) to screen coordinates (y goes down)
+                heartPoints.push({
+                    x: centerX + x * scale,
+                    y: centerY - y * scale 
+                });
+            }
+        }
+
+        // Initialize Rain droplets
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Droplet());
+        }
+
+        generateHeartPoints();
+
+        // Animation Loop
+        function animate() {
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.2)'; // trail effect (opacity for smooth movement)
+            ctx.fillRect(0, 0, width, height);
+
+            particles.forEach((particle) => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Yes Button click handler
+        function acceptProposal() {
+            isHeartShape = true;
+            
+            // Map each particle to a coordinate in the mathematical heart shape
+            particles.forEach((particle, index) => {
+                if (heartPoints[index]) {
+                    particle.targetX = heartPoints[index].x;
+                    particle.targetY = heartPoints[index].y;
+                }
+            });
+
+            // Transition UI
+            const mainCard = document.getElementById('mainCard');
+            const successCard = document.getElementById('successMessage');
+
+            mainCard.style.opacity = '0';
+            setTimeout(() => {
+                mainCard.style.display = 'none';
+                successCard.style.display = 'block';
+                setTimeout(() => {
+                    successCard.style.opacity = '1';
+                }, 50);
+            }, 1000);
+        }
+
+        // Evasive Button (Calculates vector offset from cursor)
+        function evadeButton() {
+            const noBtn = document.getElementById('noBtn');
+            const margin = 100; // safe area limits inside viewport
+
+            // Calculate random point keeping the button inside screen bounds
+            const randomX = Math.random() * (width - noBtn.offsetWidth - margin * 2) + margin;
+            const randomY = Math.random() * (height - noBtn.offsetHeight - margin * 2) + margin;
+
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = `${randomX}px`;
+            noBtn.style.top = `${randomY}px`;
+        }
+    </script>
+</body>
+</html>
